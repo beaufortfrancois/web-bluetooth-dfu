@@ -71,16 +71,12 @@
             connect(device)
             .then(chars => {
                 log("writing modeData...");
-                chars.controlChar.writeValue(new Uint8Array([1]));
-
-                // Hack to gracefully disconnect without disconnect event
-                setTimeout(() => {
-                    chars.server.disconnect();
-                    setTimeout(() => {
-                        log("modeData written");
-                        resolve(device);
-                    }, 1000);
-                }, 1000);
+                return chars.controlChar.writeValue(new Uint8Array([1]))
+                .then(() => {
+                  log("modeData written");
+                  chars.server.disconnect();
+                  resolve(device);
+                });
             })
             .catch(error => {
                 error = "writeMode error: " + error;
@@ -97,11 +93,12 @@
             connect(device)
             .then(chars => {
                 if (chars.versionChar) {
-                    chars.versionChar.readValue()
+                    console.log('reading version char...');
+                    return chars.versionChar.readValue()
                     .then(data => {
-                        var view = new DataView(data);
-                        var major = view.getUint8(0);
-                        var minor = view.getUint8(1);
+                        console.log('read version char');
+                        var major = data.getUint8(0);
+                        var minor = data.getUint8(1);
                         return transfer(chars, arrayBuffer, imageType, major, minor);
                     });
                 } else {
